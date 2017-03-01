@@ -1,4 +1,4 @@
 markdown: redcarpet
 baseurl: /jekyll-blog
 exclude: ['README.md']
-theme: jekyll-theme-architect
+theme: jekyll-theme-dinky
