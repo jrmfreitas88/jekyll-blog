@@ -1,62 +1,93 @@
 ---
 layout: post
-title:  "Flashing the SD Card"
+title:  "Configuring Users"
 date:   2017-03-01 23:22:08 +0000
 categories: jekyll update
 ---
 
 # Description
-This guide aims to describe how to flash the Raspbian distribution on a SD Flash Card with SSH enabled.
+This guide aims to describe how to modify the default Raspbian users to something more secure.
 
 # Steps
-1. Create Temporary Folder
+Let us start by defining the "root" user password.
 ```
-mkdir ~/Desktop/raspbian
-```
-
-1. Change Directory
-```
-cd !$
-```
-__Note:__ `!$` is a shortcut for the last parameter used on the last command, which would be "~/Desktop/raspbian" in this case.
-
-1. Download Raspbian Image
-```
-wget https://downloads.raspberrypi.org/raspbian_lite_latest
-```
-__Note:__ If you don't need graphical environment, I would suggest downloading the lite version.
-
-1. Identify SD Card
-```
-diskutil list
+ROOT_PASS='<Root_Password>'
 ```
 
-1. Unmount SD Card
+Followed by which users we are going to create to become the new "pi".
 ```
-diskutil unmountDisk /dev/disk2
-```
-
-1. Flash SD Card
-```
-sudo dd bs=1m if=~/Desktop/2016-11-25-raspbian-jessie-lite.img of=/dev/disk2
+ADMIN_USER='<Administrator_Username>'
+ADMIN_PASS='<Administrator_Password>'
 ```
 
-1. Check Progress Status (Optional)
+Modifying the 'root' user default password.
 ```
-[ctrl] + t
-````
-
-1. Enable SSH
-```
-touch /Volumes/boot/ssh
+sudo passwd 
+> $ROOT_PASS
+> $ROOT_PASS
 ```
 
-1. Eject
+Add new user and create home folder.
 ```
-diskutil eject /dev/disk2
+sudo useradd -m $ADMIN_USER
+```
+
+Set new user password.
+```
+sudo passwd $ADMIN_USER
+> $ADMIN_PASS
+> $ADMIN_PASS
+```
+
+Make new user a sudoer (admin).
+```
+echo "$ADMIN_USER    ALL=(ALL:ALL) ALL" | sudo tee /etc/sudoers.d/$ADMIN_USER
+sudo chmod 440 /etc/sudoers.d/$ADMIN_USER
+```
+
+Remove user 'pi' along with home folder "/home/pi"
+```
+sudo userdel -r pi
+```
+
+Remove user 'pi' sudoer privileges.
+```
+sudo rm /etc/sudoers.d/010_pi-nopasswd
+```
+
+Unset variables
+```
+unset ADMIN_USER
+unset ADMIN_PASS
+unset ROOT_PASS
+```
+
+# Troubleshooting
+Get members of group
+```
+sudo apt-get update
+sudo apt-get install members
+members <group>
+members www-data
+```
+
+Remove user from group
+```
+deluser <username> <groupname>
+deluser Administrator www-data
+```
+
+# Add user to group
+```
+usermod -a -G <group> <user>
+usermod -a -G www-data Administrator
 ```
 
 # References
-* [https://www.raspberrypi.org/documentation/installation/installing-images/mac.md][raspberry-flash-guide]
+* [http://unix.stackexchange.com/questions/287620/why-failing-to-delete-user-in-raspbian][stackexchange]
+* [http://askubuntu.com/questions/80115/how-to-remove-a-user-from-a-group][askubuntu]
+* [https://www.cyberciti.biz/faq/linux-list-all-members-of-a-group/][cyberciti]
 
-[raspberry-flash-guide]: https://www.raspberrypi.org/documentation/installation/installing-images/mac.md
+[stackexchange]: http://unix.stackexchange.com/questions/287620/why-failing-to-delete-user-in-raspbian
+[askubuntu]: http://askubuntu.com/questions/80115/how-to-remove-a-user-from-a-group
+[cyberciti]: https://www.cyberciti.biz/faq/linux-list-all-members-of-a-group/
